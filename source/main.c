@@ -25,6 +25,20 @@ enum
 	TASK_ENCRYPT,
 	TASK_DECRYPT,
 };
+#define MAX_TASKS 32
+
+void task_add(int8_t* a,int new)
+{
+	for (int i =0;i<MAX_TASKS;i++)
+	{
+		if (!a[i]) {
+			a[i] = new;
+			return;
+		}
+	}
+	puts("too many tasks!!");
+	abort();
+}
 
 int main(int argc,char** argv)
 {
@@ -33,8 +47,10 @@ int main(int argc,char** argv)
 	char* input = NULL;
 	char* output = NULL;
 	
-	bool split = false;
-	bool combine = false;
+	
+	int8_t tasks[MAX_TASKS];
+	memset(tasks,0,sizeof(tasks));
+
 	int cps_game = CPS_UNKNOWN;
 
 	for (int i =0;i<argc;i++)
@@ -46,8 +62,10 @@ int main(int argc,char** argv)
 		if (!strcmp(c,"-o")) output = next;
 		if (!strcmp(c,"--help")) return help();
 
-		if (!strcmp(c,"-split")) split= true;
-		if (!strcmp(c,"-combine")) combine= true;
+		if (!strcmp(c,"-split")) task_add(tasks,TASK_SPLIT);
+		if (!strcmp(c,"-combine")) task_add(tasks,TASK_COMBINE);
+		if (!strcmp(c,"-encrypt")) task_add(tasks,TASK_ENCRYPT);
+		if (!strcmp(c,"-decrypt")) task_add(tasks,TASK_DECRYPT);
 		if (!strcmp(c,"-g"))
 		{
 			int C = 1;
@@ -60,19 +78,6 @@ int main(int argc,char** argv)
 		}
 	}
 	if (!input) return puts("No input"),1;
-	if (!output)
-	{
-		char dummy[512];
-		snprintf(dummy,512,"./output");
-		if (split)
-			snprintf(dummy,512,"./split");
-		else if (combine)
-			snprintf(dummy,512,"./combine");
-
-		output = strdup(dummy);
-
-		printf("no output specified, defaulting to %s\n",output);
-	}
 
 	if (!cps_game)
 	{
@@ -92,16 +97,24 @@ int main(int argc,char** argv)
 	struct vfs_s* v = vfs_openauto(input);
 	if (!v) puts("no vfs");
 	
+	struct vfs_s* vfsin = v;
 	struct vfs_s* vfsout = 0;
-	if (combine)
+
+	for (int i =0;i<MAX_TASKS;i++)
 	{
-		vfsout = simm_combine(v);
+		int task = tasks[i];
+		if (!task) continue;
+
+		switch(task)
+		{
+			case TASK_COMBINE: vfsout = simm_combine(vfsin); break;
+			case TASK_SPLIT: vfsout = simm_split(vfsin,CPS_NAMES[cps_game]); break;
+		}
+		vfs_free(vfsin);
+		vfsin = vfsout;
 	}
-	else if (split)
-	{
-		vfsout = simm_split(v,CPS_NAMES[cps_game]);
-	}
-	if (vfsout)
+
+	if (output && vfsout)
 	{
 		vfs_export(vfsout,output);
 	}
@@ -109,9 +122,6 @@ int main(int argc,char** argv)
 	{
 		puts("(no output)");
 	}
-	
-
-	vfs_free(v);
 
 
 	return 0;

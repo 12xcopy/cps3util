@@ -66,14 +66,13 @@ bool simm_try_combine(struct vfs_s *x, struct vfs_s *output, long major, long mi
 		size_t rsize = total_size / 2;
 		for (size_t i = 0; i < rsize; i += 2)
 		{
-			size_t p      = i >> 1;
-			buffer[i]     = a[0]->data[p];
-			buffer[i + 1] = a[1]->data[p];
-			buffer[i + rsize] = a[2]->data[p];
+			size_t p	      = i >> 1;
+			buffer[i]	      = a[0]->data[p];
+			buffer[i + 1]	      = a[1]->data[p];
+			buffer[i + rsize]     = a[2]->data[p];
 			buffer[i + rsize + 1] = a[3]->data[p];
 		}
 	}
-
 
 	char filename[16];
 	snprintf(filename, 16, "%li%li", major, minor);
@@ -89,12 +88,12 @@ struct vfs_s *simm_combine(struct vfs_s *source)
 	{
 		y = 0;
 		// test major versions first
-		if (simm_try_combine(source,out,x,y))
+		if (simm_try_combine(source, out, x, y))
 		{
 			// worked, test the minor versions until they dont work
 			for (y = 1; true; y++)
 			{
-				if (!simm_try_combine(source,out,x,y)) break;
+				if (!simm_try_combine(source, out, x, y)) break;
 			}
 		}
 		else
@@ -112,86 +111,96 @@ struct vfs_s *simm_combine(struct vfs_s *source)
 	return out;
 }
 
-
-
 struct splitinf_s
 {
-	char* a[4];
-	char* out[4];
+	char *a[4];
+	char *out[4];
 	size_t out_size;
 };
 
-struct vfs_s *simm_split(struct vfs_s *source,const char* gamename)
+struct vfs_s *simm_split(struct vfs_s *source, const char *gamename)
 {
 	struct vfs_s *out = vfs_new(0);
 	char outname[64];
 	if (gamename)
 	{
-		snprintf(outname,64,"%s-simm%%i.%%i",gamename);
+		snprintf(outname, 64, "%s-simm%%i.%%i", gamename);
 	}
 	else
 	{
-		snprintf(outname,64,"split-simm%%i.%%i");
+		snprintf(outname, 64, "split-simm%%i.%%i");
 	}
-	
+
 	while (source)
 	{
 		const int nm = atoi(source->name);
 		if (!nm) goto label_failed;
-		// make sure its divisible by four
-		if (fract(source->size / 4.0)) goto label_failed;
+		// make sure its divisible
+		// should preferrably be a power of 2
+		if (fract(source->size / 8.0)) goto label_failed;
 
-		const int major = nm / 10;
-		int minor = nm % 10;
+		const int major		= nm / 10;
+		int minor		= nm % 10;
 		const size_t split_size = source->size / 4ul;
 
 		struct splitinf_s inf;
 		inf.out_size = split_size;
-		inf.out[0] = calloc(split_size,1);
-		inf.out[1] = calloc(split_size,1);
-		inf.out[2] = calloc(split_size,1);
-		inf.out[3] = calloc(split_size,1);
+
+		inf.out[0] = calloc(split_size, 1);
+		inf.out[1] = calloc(split_size, 1);
+		inf.out[2] = calloc(split_size, 1);
+		inf.out[3] = calloc(split_size, 1);
+
 		inf.a[0] = source->data;
 		inf.a[1] = source->data + 1;
 		inf.a[2] = source->data + 2;
 		inf.a[3] = source->data + 3;
+
 		size_t loop_size = source->size;
+		// loop_size /= 4;
+		int sz = 4;
 
 		if (major >= 3)
 		{
-			inf.a[2] = source->data + (source->size / 2ul);
-			inf.a[3] = inf.a[2] + 1;
+			char *data2 = source->data + (source->size / 2ul);
+			inf.a[0] = source->data;
+			inf.a[1] = source->data + 1;
+			inf.a[2] = data2;
+			inf.a[3] = data2 + 1;
+			sz = 2;
 			loop_size /= 2;
 		}
 
-		for (size_t i =0;i<loop_size;i+=4)
 		{
-			for (size_t m = 0;m<4;m++)
+			for (size_t m = 0; m < 4; m++)
 			{
-				char* dest = &inf.out[m][i / 4];
-				char* trg = &inf.a[m][i];
-				*dest = *trg;
-
+				for (size_t i = 0; i < loop_size; i += sz)
+				{
+					// printf("%i : %li %li %li\n",sz,i,loop_size,source->size);
+					char *dest = &inf.out[m][i / sz];
+					char *trg  = &inf.a[m][i];
+					*dest	   = *trg;
+				}
 			}
 		}
 
 		minor *= 4;
-		for (int i =0;i<4;i++)
+		for (int i = 0; i < 4; i++)
 		{
 			char name[128];
-			snprintf(name,128,outname,major,minor + i);
-			vfs_append(out,name,inf.out[i])->size = split_size;
+			snprintf(name, 128, outname, major, minor + i);
+			vfs_append(out, name, inf.out[i])->size = split_size;
 		}
-		printf("split %s\n",source->name);
+		printf("split %s\n", source->name);
 
-		source=source->next;
+		source = source->next;
 		continue;
-		label_failed:
-		printf("not splitting %s\n",source->name);
-		source=source->next;
+	label_failed:
+		printf("not splitting %s\n", source->name);
+		source = source->next;
 		continue;
 	}
-	
+
 	if (!out->data)
 	{
 		// failed

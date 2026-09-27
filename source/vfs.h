@@ -54,7 +54,7 @@ static struct vfs_s* vfs_find(struct vfs_s* n,const char* file)
 static struct vfs_s* vfs_append(struct vfs_s* n,const char* filename,void* data)
 {
 	struct vfs_s* m = vfs_new(n);
-	strncpy(m->name,filename,sizeof(m->name));
+	strncpy(m->name,filename,sizeof(m->name) - 1);
 	m->data = data;
 	return m;
 }
