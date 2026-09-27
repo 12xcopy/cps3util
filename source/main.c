@@ -9,12 +9,22 @@
 
 int help()
 {
-	return puts("usage: " NAME " < -split, -combine > -i jojobanr1.zip -o output.zip"), 1;
+	const char* helptxt = 
+	"good help text will be here\n"
+	;
+	return puts(helptxt), 1;
 }
 
 // combined = 10, 20
 // split = -simm1.0
-
+enum
+{
+	TASK_NONE,
+	TASK_SPLIT,
+	TASK_COMBINE,
+	TASK_ENCRYPT,
+	TASK_DECRYPT,
+};
 
 int main(int argc,char** argv)
 {
@@ -22,11 +32,10 @@ int main(int argc,char** argv)
 
 	char* input = NULL;
 	char* output = NULL;
-
-	int num_tasks = 0;
 	
 	bool split = false;
 	bool combine = false;
+	int cps_game = CPS_UNKNOWN;
 
 	for (int i =0;i<argc;i++)
 	{
@@ -39,28 +48,66 @@ int main(int argc,char** argv)
 
 		if (!strcmp(c,"-split")) split= true;
 		if (!strcmp(c,"-combine")) combine= true;
+		if (!strcmp(c,"-g"))
+		{
+			int C = 1;
+			const char* n;
+			while ((n = CPS_NAMES[C]))
+			{
+				if (!strcmp(next,n)) cps_game = C;
+				C++;
+			}
+		}
 	}
 	if (!input) return puts("No input"),1;
+	if (!output)
+	{
+		char dummy[512];
+		snprintf(dummy,512,"./output");
+		if (split)
+			snprintf(dummy,512,"./split");
+		else if (combine)
+			snprintf(dummy,512,"./combine");
+
+		output = strdup(dummy);
+
+		printf("no output specified, defaulting to %s\n",output);
+	}
+
+	if (!cps_game)
+	{
+		// try to autodetect
+		int C = 1;
+		const char* n;
+		while ((n = CPS_NAMES[C]))
+		{
+			if (strstr(input,n)) cps_game = C;
+			C++;
+		}
+
+		if (cps_game) printf("detected game as %s\n",CPS_NAMES[cps_game]);
+		else printf("could not auto detect game\n");
+	}
+
 	struct vfs_s* v = vfs_openauto(input);
 	if (!v) puts("no vfs");
 	
-	struct vfs_s* combo = simm_combine(v);
-	if (combo)
+	struct vfs_s* vfsout = 0;
+	if (combine)
 	{
-		struct vfs_s* n = combo;
-		while (n)
-		{
-			printf("%s : %i : %x\n",n->name,n->size,n->data);
-
-			char bnn[512];
-			snprintf(bnn,512,"./out/%s",n->name);
-			FILE* f = fopen(bnn,"wb");
-			rtassert(f);
-			fwrite(n->data,n->size,1,f);
-			fclose(f);
-
-			n=n->next;
-		}
+		vfsout = simm_combine(v);
+	}
+	else if (split)
+	{
+		vfsout = simm_split(v,CPS_NAMES[cps_game]);
+	}
+	if (vfsout)
+	{
+		vfs_export(vfsout,output);
+	}
+	else
+	{
+		puts("(no output)");
 	}
 	
 

@@ -71,7 +71,7 @@ struct vfs_s *vfs_opendir(const char *directory)
 			size_t len = ftell(f);
 			fseek(f,0,SEEK_SET);
 			char* b = calloc(len,1);
-			fwrite(b,len,1,f);
+			fread(b,len,1,f);
 			fclose(f);
 			if (!output) output = vfs_new(0);
 			vfs_append(output,de->d_name,b)->size = len;
@@ -89,4 +89,51 @@ struct vfs_s* vfs_openauto(const char* thing)
 	if (chk_file(thing) == true) is_archive = true; 
 	if (is_archive) return vfs_openzip(thing);
 	return vfs_opendir(thing);
+}
+
+
+
+void vfs_export(struct vfs_s* vfs,const char* output)
+{
+	bool zip = strstr(output,".zip");
+
+	if (!zip)
+	{
+		// simple. just dump it to a directory
+		os_mkdir(output,0777);
+		while (vfs)
+		{
+			char path[512];
+			snprintf(path,512,"%s/%s",output,vfs->name);
+			FILE* f = fopen(path,"wb");
+			if (!f)
+			{
+				perror("Error opening file");
+				rtassert_msgf(0,"cannot make file %s\n",path);
+			}
+			fwrite(vfs->data,vfs->size,1,f);
+			fclose(f);
+			vfs = vfs->next;
+		}
+		printf("finished writing to directory %s\n",output);
+		return;
+	}
+
+	// wants a zip file
+	int err = 0;
+	struct zip *z = zip_open(output, ZIP_CREATE, &err);
+	if (!z) rtassert_msgf(0, "zip make err %i", err);
+
+	while (vfs)
+	{
+		zip_source_t* s = zip_source_buffer(z,vfs->data,vfs->size,1);
+		rtassert(s);
+		zip_file_add(z,vfs->name,s,ZIP_FL_ENC_UTF_8 | ZIP_FL_OVERWRITE);
+		//zip_source_free(s);
+		vfs=vfs->next;
+	}
+	puts("compressing...");
+	zip_close(z);
+
+	printf("finished writing to archive %s\n",output);
 }

@@ -62,3 +62,6 @@ static struct vfs_s* vfs_append(struct vfs_s* n,const char* filename,void* data)
 struct vfs_s* vfs_openzip(const char* zipfile);
 struct vfs_s* vfs_opendir(const char* directory);
 struct vfs_s* vfs_openauto(const char* thing);
+
+// output can be a zip file or a directory
+void vfs_export(struct vfs_s* vfs,const char* output);

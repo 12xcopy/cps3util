@@ -9,7 +9,7 @@
 	"type": "cppdbg",
 	"request": "launch",
 	"program": "${workspaceFolder}/cpsutil",
-	"args": ["-i","working/jojoba.zip"],
+	"args": ["-split","-i","tests/combo","-o","split.zip"],
 	"stopAtEntry": true,
 	"cwd": "${workspaceFolder}",
 	"environment": [],

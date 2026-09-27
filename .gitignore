@@ -5,3 +5,9 @@ out
 *.so
 *.exe
 *.dll
+tests/combo
+tests/split
+tests/target
+tests/hash.txt
+*.part
+tests/*.zip

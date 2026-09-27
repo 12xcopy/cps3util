@@ -5,6 +5,8 @@ FLAGS += -Wno-unused-function -g
 
 SRC = source/main.c source/vfs.c source/simm.c
 
+# FLAGS += -fsanitize=address
+
 LIBS = -lzip
 
 all:

@@ -1,0 +1,28 @@
+cpsutil is a command line utility tool for CPS3 games.
+
+different CPS3 emulators expect differently formatted roms, this tool can convert between the two.
+a split rom looks like this:
+	game-simm1.0, game-simm1.1, game-simm1.2, game-simm1.3
+a combined rom looks like this:
+	10, 20, 30, 31
+
+usage:
+	cpsutil < -g [gamename] > -i [inputs] ( -combine, -split, -encrypt, -decrypt ) -o [output]
+input should be your rom, the output and input can be a zip file or a directory.
+the tasks can be chained together
+
+example usage:
+	cpsutil -i game.zip -combine -o output.zip
+this will take a split rom (game.zip), combine it, and dump it to output.zip.
+the tool tries to detect what cps3 game you're using based on the name, you can manually input it as well.
+
+example usage:
+	cpsutil -g sfiii3 -i ./romdirectory -combine -o ./output
+
+chaining example usage:
+	cpsutil -i game.zip -combine -split -o output.zip
+this will take a split rom, combine it, and then split it again. there is no reason to do this
+
+chaining example usage:
+	cpsutil -i ./game -encrypt -split -o output.zip
+this will take a combined rom, encrypt and then split it. useful for rom hacks
