@@ -25,7 +25,7 @@ enum
 	TASK_ENCRYPT,
 	TASK_DECRYPT,
 };
-#define MAX_TASKS 32
+#define MAX_TASKS 128
 
 void task_add(int8_t* a,int new)
 {
@@ -50,7 +50,7 @@ int main(int argc,char** argv)
 	
 	int8_t tasks[MAX_TASKS];
 	memset(tasks,0,sizeof(tasks));
-	bool nocompress = false;
+	bool nocompress = true;
 
 	int cps_game = CPS_UNKNOWN;
 
@@ -63,7 +63,7 @@ int main(int argc,char** argv)
 		if (!strcmp(c,"-o")) output = next;
 		if (!strcmp(c,"--help")) return help();
 
-		if (!strcmp(c,"-nocompress")) nocompress=1;
+		if (!strcmp(c,"-compress")) nocompress=0;
 		if (!strcmp(c,"-split")) task_add(tasks,TASK_SPLIT);
 		if (!strcmp(c,"-combine")) task_add(tasks,TASK_COMBINE);
 		if (!strcmp(c,"-encrypt")) task_add(tasks,TASK_ENCRYPT);

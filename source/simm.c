@@ -135,6 +135,12 @@ struct vfs_s *simm_split(struct vfs_s *source, const char *gamename)
 	{
 		const int nm = atoi(source->name);
 		if (!nm) goto label_failed;
+		if (nm < 10) goto label_failed;
+		if (source->name[2] == 'd')
+		{
+			// likely a decrypted rom. may not be intended
+			printf("warning: %s may be a decrypted rom\n",source->name);
+		}
 		// make sure its divisible
 		// should preferrably be a power of 2
 		if (fract(source->size / 8.0)) goto label_failed;
