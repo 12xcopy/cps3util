@@ -50,6 +50,7 @@ int main(int argc,char** argv)
 	
 	int8_t tasks[MAX_TASKS];
 	memset(tasks,0,sizeof(tasks));
+	bool nocompress = false;
 
 	int cps_game = CPS_UNKNOWN;
 
@@ -62,6 +63,7 @@ int main(int argc,char** argv)
 		if (!strcmp(c,"-o")) output = next;
 		if (!strcmp(c,"--help")) return help();
 
+		if (!strcmp(c,"-nocompress")) nocompress=1;
 		if (!strcmp(c,"-split")) task_add(tasks,TASK_SPLIT);
 		if (!strcmp(c,"-combine")) task_add(tasks,TASK_COMBINE);
 		if (!strcmp(c,"-encrypt")) task_add(tasks,TASK_ENCRYPT);
@@ -109,6 +111,8 @@ int main(int argc,char** argv)
 		{
 			case TASK_COMBINE: vfsout = simm_combine(vfsin); break;
 			case TASK_SPLIT: vfsout = simm_split(vfsin,CPS_NAMES[cps_game]); break;
+			case TASK_ENCRYPT: vfsout = simm_encrypt(vfsin,cps_game); break;
+			case TASK_DECRYPT: vfsout = simm_decrypt(vfsin,cps_game); break;
 		}
 		vfs_free(vfsin);
 		vfsin = vfsout;
@@ -116,7 +120,8 @@ int main(int argc,char** argv)
 
 	if (output && vfsout)
 	{
-		vfs_export(vfsout,output);
+		vfs_export(vfsout,output,!nocompress);
+		vfs_free(vfsout);
 	}
 	else
 	{

@@ -1,0 +1,1 @@
+../cpsutil -g jojoba -i ./combo/ -decrypt -o ./test

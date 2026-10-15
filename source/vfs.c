@@ -93,7 +93,7 @@ struct vfs_s* vfs_openauto(const char* thing)
 
 
 
-void vfs_export(struct vfs_s* vfs,const char* output)
+void vfs_export(struct vfs_s* vfs,const char* output,bool compress)
 {
 	bool zip = strstr(output,".zip");
 
@@ -128,11 +128,12 @@ void vfs_export(struct vfs_s* vfs,const char* output)
 	{
 		zip_source_t* s = zip_source_buffer(z,vfs->data,vfs->size,1);
 		rtassert(s);
-		zip_file_add(z,vfs->name,s,ZIP_FL_ENC_UTF_8 | ZIP_FL_OVERWRITE);
+		uint64_t indx = zip_file_add(z,vfs->name,s,ZIP_FL_ENC_UTF_8 | ZIP_FL_OVERWRITE);
+		if (!compress) zip_set_file_compression(z, indx, ZIP_CM_STORE, 0);
 		//zip_source_free(s);
 		vfs=vfs->next;
 	}
-	puts("compressing...");
+	puts(compress ? "compressing..." : "writing uncompressed zip...");
 	zip_close(z);
 
 	printf("finished writing to archive %s\n",output);

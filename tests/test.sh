@@ -6,6 +6,7 @@ rm -rf ./hash.txt
 
 touch ./hash.txt
 bash ./mkhash.sh
+../cpsutil -g jojoba -i ../working/jojoba.zip -combine -decrypt -o test
 echo "check to see if the hashes in hash.txt and target.txt are the same"
 
 ../cpsutil -combine -i ../working/jojoba.zip -o jojoba-combo.zip

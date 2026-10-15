@@ -15,6 +15,7 @@ example usage:
 	cpsutil -i game.zip -combine -o output.zip
 this will take a split rom (game.zip), combine it, and dump it to output.zip.
 the tool tries to detect what cps3 game you're using based on the name, you can manually input it as well.
+for encryption/decryption it needs to know the game
 
 example usage:
 	cpsutil -g sfiii3 -i ./romdirectory -combine -o ./output
@@ -24,5 +25,5 @@ chaining example usage:
 this will take a split rom, combine it, and then split it again. there is no reason to do this
 
 chaining example usage:
-	cpsutil -i ./game -encrypt -split -o output.zip
+	cpsutil -g jojoba -i ./game -encrypt -split -o jojoba.zip
 this will take a combined rom, encrypt and then split it. useful for rom hacks

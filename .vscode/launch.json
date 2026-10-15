@@ -9,7 +9,7 @@
 	"type": "cppdbg",
 	"request": "launch",
 	"program": "${workspaceFolder}/cpsutil",
-	"args": ["-split","-i","tests/combo","-o","split.zip"],
+	"args": ["-decrypt","-i","tests/combo","-o","tests/swag.zip","-g","jojoba"],
 	"stopAtEntry": true,
 	"cwd": "${workspaceFolder}",
 	"environment": [],

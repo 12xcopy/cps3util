@@ -11,3 +11,4 @@ tests/target
 tests/hash.txt
 *.part
 tests/*.zip
+tests/test

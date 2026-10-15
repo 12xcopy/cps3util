@@ -3,7 +3,7 @@
 enum
 {
 	CPS_UNKNOWN,
-	CPS_RED_EARTH, // red earth
+	CPS_RED_EARTH, // red earth / warzard
 	CPS_SFIII, // sf3: new generation
 	CPS_SFIII_2, // sf3: 2nd impact
 	CPS_JOJO, // jojo's venture
@@ -56,7 +56,7 @@ static ForceInline uint16_t rotate_right(uint16_t value, int n)
 }
 #endif
 
-static uint16_t rotxor(uint16_t val, uint16_t xorval)
+static uint16_t cps_rotxor(uint16_t val, uint16_t xorval)
 {
 	uint16_t res = val + rotate_left(val,2);
 	res = rotate_left(res,4) ^ (res & (val ^ xorval));
@@ -66,22 +66,21 @@ static uint32_t cps3_mask(uint32_t address, uint32_t key1, uint32_t key2)
 {
 	if (key1 == 0)
 		return 0;
-
+	//address &= ~0x3;
 	address ^= key1;
 	uint16_t val = (address & 0xffff) ^ 0xffff;
-	val = rotxor(val, key2 & 0xffff);
+	val = cps_rotxor(val, key2 & 0xffff);
 	val ^= (address >> 16) ^ 0xffff;
-	val = rotxor(val, key2 >> 16);
+	val = cps_rotxor(val, key2 >> 16);
 	val ^= (address & 0xffff) ^ (key2 & 0xffff);
-	return val | (val << 16);
+	return val;
 }
-
 
 static struct {
 	long_t a,b;
 } CPS_KEYS[] = {
 	{0,0},
-	{0x9e300ab1,0xa175b82c},
+	{0x9e300ab1,0xa175b82c}, // red earth
 	{0xb5fe053e,0xfc03925a}, // ng
 	{0,0}, // 2nd impact
 	{0x02203ee3,0x01301972}, // jojo
@@ -89,3 +88,10 @@ static struct {
 	{0x23323ee3,0x03021972}, // heritage
 
 };
+
+static uint32_t cps3_mask_game(uint32_t address, int key_set)
+{
+	uint32_t k1 = CPS_KEYS[key_set].a;
+	uint32_t k2 = CPS_KEYS[key_set].b;
+	return cps3_mask(address,k1,k2);
+}

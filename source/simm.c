@@ -209,3 +209,60 @@ struct vfs_s *simm_split(struct vfs_s *source, const char *gamename)
 	}
 	return out;
 }
+
+#include "cps3.h"
+
+static struct vfs_s *simm_crypt(struct vfs_s *source,int game,bool encrypt)
+{
+	if (game == 0)
+	{
+		puts("unknown game for encryption/decryption. will abort");
+		abort();
+	}
+	struct vfs_s *out = vfs_new(0);
+	while (source)
+	{
+		int n = atoi(source->name);
+		if (n && n <= 29)
+		{
+			size_t size = source->size;
+			size_t addr = 0x6000000; // (100663296)
+			if (n >= 20) addr += 0x800000;
+			uint8_t* nd = malloc(source->size);
+			for (size_t i = 0;i<size;i+=4)
+			{
+				// 32 bit mask but the upper and lower 16 bits are the same
+				uint32_t mask = cps3_mask_game(addr + i,game);
+				
+				uint8_t low = mask & 0xff;
+				uint8_t high = (mask & 0xff00) >> 8;
+
+				uint8_t a = source->data[i] ^ high;
+				uint8_t b = source->data[i + 1] ^ low;
+				uint8_t c = source->data[i + 2] ^ high;
+				uint8_t d = source->data[i + 3] ^ low;
+
+				nd[i] = a;
+				nd[i+1] = b;
+				nd[i+2] = c;
+				nd[i+3] = d;
+
+
+			}
+			char newname[64];
+			const char* formatstr = (!encrypt) ? "%id.bin" : "%i";
+			snprintf(newname,64,formatstr,n);
+			vfs_append(out,newname,nd)->size = size;
+		}
+		source=source->next;
+	}
+	return out;
+}
+struct vfs_s *simm_decrypt(struct vfs_s *source,int game)
+{
+	return simm_crypt(source,game,0);
+}
+struct vfs_s *simm_encrypt(struct vfs_s *source,int game)
+{
+	return simm_crypt(source,game,1);
+}
