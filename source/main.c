@@ -121,7 +121,7 @@ int main(int argc,char** argv)
 	if (output && vfsout)
 	{
 		vfs_export(vfsout,output,!nocompress);
-		vfs_free(vfsout);
+		//vfs_free(vfsout);
 	}
 	else
 	{
